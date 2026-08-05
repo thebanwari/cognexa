@@ -1,0 +1,53 @@
+# Virtual Environment
+venv/
+.venv/
+backend/venv/
+
+# Environment Variables
+.env
+.env.*
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated files
+backend/app/static/pdf/*
+backend/app/static/mindmaps/*
+backend/temp/
+
+# Local files
+structure.txt
+
+# Vector DB
+backend/chroma/
+backend/chroma_db/
+
+# Node
+node_modules/
+
+# Claude
+.claude/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+backend/static/mindmaps/
+
+structure.txt
