@@ -1,450 +1,216 @@
-# import os
-# import markdown
-# from jinja2 import Environment, FileSystemLoader
-# from typing import Dict, Any, Optional
-# from datetime import datetime
-# import logging
-# from reportlab.lib.pagesizes import letter
-# from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-# from reportlab.lib.styles import getSampleStyleSheet
-# from reportlab.lib.units import inch
-
-# logger = logging.getLogger(__name__)
-
-
-# def course_json_to_markdown(course_data: Dict[str, Any]) -> str:
-#     """
-#     Convert course JSON data to Markdown format.
-
-#     Args:
-#         course_data: Course data as dictionary
-
-#     Returns:
-#         Markdown content as string
-#     """
-#     try:
-#         # Load template
-#         template_dir = "app/templates"
-#         env = Environment(loader=FileSystemLoader(template_dir))
-#         template = env.get_template("course_template.md")
-
-#         # Render markdown
-#         markdown_content = template.render(
-#             course=course_data,
-#             generated_date=datetime.now().strftime("%B %d, %Y")
-#         )
-
-#         logger.info("Successfully converted course JSON to Markdown")
-#         return markdown_content
-
-#     except Exception as e:
-#         logger.error(f"Failed to convert course JSON to Markdown: {e}")
-#         # Fallback to basic markdown generation
-#         return _fallback_markdown_generation(course_data)
-
-
-# def _fallback_markdown_generation(course_data: Dict[str, Any]) -> str:
-#     """Fallback method to generate markdown from course data"""
-#     lines = []
-
-#     # Course title and metadata
-#     lines.append(f"# {course_data.get('title', 'Course')}")
-#     lines.append("")
-#     lines.append(f"**Description:** {course_data.get('description', '')}")
-#     lines.append(f"**Difficulty:** {course_data.get('difficulty', 'N/A')}")
-#     lines.append(f"**Duration:** {course_data.get('duration_weeks', 0)} weeks")
-#     lines.append(f"**Language:** {course_data.get('language', 'English')}")
-#     lines.append("")
-
-#     # Learning objectives
-#     objectives = course_data.get('learning_objectives', [])
-#     if objectives:
-#         lines.append("## Learning Objectives")
-#         for obj in objectives:
-#             lines.append(f"- {obj}")
-#         lines.append("")
-
-#     # Prerequisites
-#     prerequisites = course_data.get('prerequisites', [])
-#     if prerequisites:
-#         lines.append("## Prerequisites")
-#         for prereq in prerequisites:
-#             lines.append(f"- {prereq}")
-#         lines.append("")
-
-#     # Weeks
-#     weeks = course_data.get('weeks', [])
-#     for week in weeks:
-#         week_num = week.get('week_number', 0)
-#         week_title = week.get('title', f'Week {week_num}')
-#         lines.append(f"## Week {week_num}: {week_title}")
-
-#         week_objectives = week.get('objectives', [])
-#         if week_objectives:
-#             lines.append("**Objectives:**")
-#             for obj in week_objectives:
-#                 lines.append(f"- {obj}")
-
-#         # Days
-#         days = week.get('days', [])
-#         for day in days:
-#             day_num = day.get('day_number', 0)
-#             day_title = day.get('title', f'Day {day_num}')
-#             lines.append(f"### Day {day_num}: {day_title}")
-
-#             day_objectives = day.get('objectives', [])
-#             if day_objectives:
-#                 lines.append("**Objectives:**")
-#                 for obj in day_objectives:
-#                     lines.append(f"- {obj}")
-
-#             day_content = day.get('content', '')
-#             if day_content:
-#                 lines.append("**Content:**")
-#                 lines.append(day_content)
-
-#             day_activities = day.get('activities', [])
-#             if day_activities:
-#                 lines.append("**Activities:**")
-#                 for activity in day_activities:
-#                     lines.append(f"- {activity}")
-
-#             lines.append("")
-
-#     # Assignments
-#     assignments = course_data.get('assignments', [])
-#     if assignments:
-#         lines.append("## Assignments")
-#         for assignment in assignments:
-#             title = assignment.get('title', 'Assignment')
-#             type_ = assignment.get('type', 'N/A')
-#             difficulty = assignment.get('difficulty', 'N/A')
-#             lines.append(f"### {title}")
-#             lines.append(f"**Type:** {type_}")
-#             lines.append(f"**Difficulty:** {difficulty}")
-
-#             questions = assignment.get('questions', [])
-#             if questions:
-#                 lines.append("**Questions:**")
-#                 for i, question in enumerate(questions, 1):
-#                     lines.append(f"{i}. {question}")
-
-#             lines.append("")
-
-#     # Flashcards
-#     flashcards = course_data.get('flashcards', [])
-#     if flashcards:
-#         lines.append("## Flashcards")
-#         for flashcard in flashcards:
-#             front = flashcard.get('front', '')
-#             back = flashcard.get('back', '')
-#             category = flashcard.get('category', '')
-#             lines.append(f"### {front} ({category})")
-#             lines.append(back)
-#             lines.append("")
-
-#     return "\n".join(lines)
-
-
-# def markdown_to_html(markdown_content: str) -> str:
-#     """
-#     Convert Markdown to HTML.
-
-#     Args:
-#         markdown_content: Markdown content
-
-#     Returns:
-#         HTML content as string
-#     """
-#     try:
-#         # Convert markdown to HTML
-#         html_content = markdown.markdown(
-#             markdown_content,
-#             extensions=['fenced_code', 'codehilite', 'tables', 'sane_lists']
-#         )
-
-#         # Add CSS styling
-#         styled_html = _add_css_styling(html_content)
-
-#         logger.info("Successfully converted Markdown to HTML")
-#         return styled_html
-
-#     except Exception as e:
-#         logger.error(f"Failed to convert Markdown to HTML: {e}")
-#         return f"<html><body><pre>{markdown_content}</pre></body></html>"
-
-
-# def _add_css_styling(html_content: str) -> str:
-#     """Add CSS styling to HTML content"""
-#     css = """
-#     <style>
-#         body {
-#             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-#             line-height: 1.6;
-#             color: #333;
-#             max-width: 800px;
-#             margin: 0 auto;
-#             padding: 20px;
-#             background-color: #fafafa;
-#         }
-#         h1, h2, h3, h4, h5, h6 {
-#             color: #2c3e50;
-#             margin-top: 1.5em;
-#             margin-bottom: 0.5em;
-#         }
-#         h1 {
-#             border-bottom: 3px solid #3498db;
-#             padding-bottom: 10px;
-#         }
-#         h2 {
-#             border-bottom: 2px solid #2ecc71;
-#             padding-bottom: 8px;
-#         }
-#         code {
-#             background-color: #ecf0f1;
-#             padding: 2px 4px;
-#             border-radius: 3px;
-#             font-family: 'Courier New', monospace;
-#         }
-#         pre {
-#             background-color: #2c3e50;
-#             color: #ecf0f1;
-#             padding: 15px;
-#             border-radius: 5px;
-#             overflow-x: auto;
-#             font-family: 'Courier New', monospace;
-#             line-height: 1.4;
-#         }
-#         pre code {
-#             background-color: transparent;
-#             color: inherit;
-#             padding: 0;
-#         }
-#         ul, ol {
-#             padding-left: 20px;
-#         }
-#         li {
-#             margin-bottom: 8px;
-#         }
-#         table {
-#             border-collapse: collapse;
-#             width: 100%;
-#             margin: 15px 0;
-#         }
-#         th, td {
-#             border: 1px solid #ddd;
-#             padding: 12px;
-#             text-align: left;
-#         }
-#         th {
-#             background-color: #3498db;
-#             color: white;
-#         }
-#         tr:nth-child(even) {
-#             background-color: #f2f2f2;
-#         }
-#         .course-meta {
-#             background-color: #e8f4fd;
-#             border-left: 4px solid #3498db;
-#             padding: 15px;
-#             margin: 20px 0;
-#         }
-#         .learning-objectives {
-#             background-color: #e8f5e8;
-#             border-left: 4px solid #2ecc71;
-#             padding: 15px;
-#             margin: 20px 0;
-#         }
-#         .prerequisites {
-#             background-color: #fff3cd;
-#             border-left: 4px solid #ffc107;
-#             padding: 15px;
-#             margin: 20px 0;
-#         }
-#         .footer {
-#             margin-top: 40px;
-#             padding-top: 20px;
-#             border-top: 1px solid #ddd;
-#             text-align: center;
-#             color: #777;
-#             font-size: 0.9em;
-#         }
-#     </style>
-#     """
-
-#     return f"""
-#     <!DOCTYPE html>
-#     <html>
-#     <head>
-#         <meta charset="UTF-8">
-#         <title>{_extract_title_from_html(html_content) or 'Course Content'}</title>
-#         {css}
-#     </head>
-#     <body>
-#         {html_content}
-#         <div class="footer">
-#             <p>Generated by CourseCraft-AI on {datetime.now().strftime("%B %d, %Y")}</p>
-#         </div>
-#     </body>
-#     </html>
-#     """
-
-
-# def _extract_title_from_html(html_content: str) -> Optional[str]:
-#     """Extract title from HTML content"""
-#     import re
-#     title_match = re.search(r'<h1>(.*?)</h1>', html_content)
-#     if title_match:
-#         return title_match.group(1)
-#     return None
-
-
-# def save_pdf_file(html_content: str, file_path: str) -> bool:
-#     """
-#     Windows-safe PDF generator using ReportLab.
-#     HTML content is converted to plain text paragraphs.
-#     """
-
-#     try:
-#         doc = SimpleDocTemplate(
-#             file_path,
-#             pagesize=letter,
-#             rightMargin=40,
-#             leftMargin=40,
-#             topMargin=40,
-#             bottomMargin=40
-#         )
-
-#         styles = getSampleStyleSheet()
-#         story = []
-
-#         # Basic title extraction
-#         title = "Course PDF"
-#         if "<h1>" in html_content:
-#             try:
-#                 title = html_content.split("<h1>")[1].split("</h1>")[0]
-#             except Exception:
-#                 pass
-
-#         story.append(Paragraph(f"<b>{title}</b>", styles["Title"]))
-#         story.append(Spacer(1, 0.2 * inch))
-
-#         # Remove raw HTML tags to convert to clean text
-#         import re
-#         clean_text = re.sub('<[^<]+?>', '', html_content)
-
-#         # Split paragraphs
-#         paragraphs = clean_text.split("\n")
-
-#         for para in paragraphs:
-#             if para.strip() != "":
-#                 story.append(Paragraph(para.strip(), styles["BodyText"]))
-#                 story.append(Spacer(1, 0.15 * inch))
-
-#         doc.build(story)
-#         return True
-
-#     except Exception as e:
-#         logger.error(f"ReportLab PDF generation failed: {e}")
-#         return False
-
-
-# def generate_course_pdf(course_data: Dict[str, Any], output_path: str) -> bool:
-#     """
-#     Generate PDF from course data using Markdown → HTML → ReportLab.
-#     Fully Windows-safe.
-#     """
-#     try:
-#         # Convert JSON → Markdown
-#         markdown_content = course_json_to_markdown(course_data)
-#         if not markdown_content:
-#             logger.error("Failed to generate Markdown from course data")
-#             return False
-
-#         # Convert Markdown → HTML
-#         html_content = markdown_to_html(markdown_content)
-#         if not html_content:
-#             logger.error("Failed to generate HTML from Markdown")
-#             return False
-
-#         # Save PDF using Windows-safe ReportLab
-#         success = save_pdf_file(html_content, output_path)
-
-#         if success:
-#             logger.info(f"PDF generated: {output_path}")
-#         else:
-#             logger.error(f"PDF generation failed for: {output_path}")
-
-#         return success
-
-#     except Exception as e:
-#         logger.error(f"Error in generate_course_pdf: {e}")
-#         return False
-
-
 import os
 import re
 from typing import Dict, Any
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.colors import HexColor
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
     Spacer,
     ListFlowable,
-    ListItem
+    ListItem,
+    Preformatted,
+    Flowable,
+    KeepTogether,
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+
+
+class BackgroundPreformatted(Flowable):
+    """Preformatted text with a visible background rectangle.
+
+    ReportLab's Preformatted.draw() ignores ParagraphStyle.backColor,
+    so this wrapper draws the background rect manually before
+    delegating text rendering to a standard Preformatted flowable.
+
+    Split strategy:
+        - If the block fits on a fresh page, defer it entirely.
+        - If splitting is unavoidable, keep at least _MIN_SPLIT_LINES
+          on each side to prevent orphaned fragments.
+    """
+
+    _PADDING = 8  # points of padding inside the background rect
+    _MIN_SPLIT_LINES = 3  # minimum lines to keep on either side of a split
+
+    def __init__(self, text, style):
+        super().__init__()
+        self._pre = Preformatted(text, style)
+        self._bg = style.backColor
+        self._style = style
+
+    def wrap(self, availWidth, availHeight):
+        w, h = self._pre.wrap(availWidth, availHeight)
+        self.width = w
+        self.height = h + 2 * self._PADDING
+        return self.width, self.height
+
+    def split(self, availWidth, availHeight):
+        usable = availHeight - 2 * self._PADDING
+        leading = self._style.leading
+        total_lines = len(self._pre.lines)
+
+        # How many lines fit in the available space?
+        lines_that_fit = int(usable / leading)
+
+        # Nothing fits — defer to the next page
+        if lines_that_fit < self._MIN_SPLIT_LINES:
+            return []
+
+        # Everything fits — no split needed
+        if lines_that_fit >= total_lines:
+            return [self]
+
+        lines_remaining = total_lines - lines_that_fit
+
+        # The remainder is a small orphan AND the whole block would
+        # fit on a fresh page (~57 lines at leading=12) — defer entirely
+        full_page_lines = int(692.0 / leading)  # 692pt usable on letter
+        if lines_remaining <= self._MIN_SPLIT_LINES and total_lines <= full_page_lines:
+            return []
+
+        # If splitting would leave too few lines on the first page,
+        # also defer (block fits on next page)
+        if lines_that_fit < self._MIN_SPLIT_LINES and total_lines <= full_page_lines:
+            return []
+
+        # Genuine split — block is too large for one page
+        text1 = "\n".join(self._pre.lines[:lines_that_fit])
+        text2 = "\n".join(self._pre.lines[lines_that_fit:])
+        return [
+            BackgroundPreformatted(text1, self._style),
+            BackgroundPreformatted(text2, self._style),
+        ]
+
+    def draw(self):
+        if self._bg:
+            self.canv.saveState()
+            self.canv.setFillColor(self._bg)
+            self.canv.rect(
+                0, 0, self.width, self.height,
+                stroke=0, fill=1,
+            )
+            self.canv.restoreState()
+        self._pre.drawOn(self.canv, 0, self._PADDING)
 
 
 # ---------------------------
 # MARKDOWN → REPORTLAB PARSER
 # ---------------------------
 
+def md_to_rl(text: str) -> str:
+    """Convert inline markdown syntax to ReportLab XML tags.
+
+    Handles:
+        **bold**   → <b>bold</b>
+        *italic*   → <i>italic</i>
+        `code`     → <font name="Courier" color="#c0392b">code</font>
+
+    Asterisks inside code spans (e.g. `*args`, `**kwargs`) are escaped
+    so they are not misinterpreted as bold/italic markers.
+    """
+    # Code spans first — escape asterisks inside the matched content
+    # so the bold/italic passes don't corrupt code like *args / **kwargs
+    def _code_span(m):
+        inner = m.group(1).replace("*", "&#42;")
+        return f'<font name="Courier" color="#c0392b">{inner}</font>'
+
+    text = re.sub(r'`([^`]+?)`', _code_span, text)
+    # Bold (**text**) — must come before italic
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+    # Italic (*text*) — only single asterisks remaining after bold pass
+    text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+    return text
+
+
 def parse_markdown_to_story(markdown_text: str):
     styles = getSampleStyleSheet()
 
-    # Custom styles (more bold and clear)
-    styles.add(ParagraphStyle(name='H1', parent=styles['Heading1'], fontSize=22, spaceAfter=12))
-    styles.add(ParagraphStyle(name='H2', parent=styles['Heading2'], fontSize=18, spaceAfter=10))
-    styles.add(ParagraphStyle(name='H3', parent=styles['Heading3'], fontSize=14, spaceAfter=8))
+    # Custom styles — keepWithNext prevents orphan headings at page bottoms
+    styles.add(ParagraphStyle(name='H1', parent=styles['Heading1'], fontSize=22, spaceAfter=12, keepWithNext=True))
+    styles.add(ParagraphStyle(name='H2', parent=styles['Heading2'], fontSize=18, spaceAfter=10, keepWithNext=True))
+    styles.add(ParagraphStyle(name='H3', parent=styles['Heading3'], fontSize=14, spaceAfter=8, keepWithNext=True))
     styles.add(ParagraphStyle(name='CustomBullet', parent=styles['BodyText'], leftIndent=20, bulletIndent=10))
     styles.add(ParagraphStyle(name='NormalText', parent=styles['BodyText'], fontSize=11, spaceAfter=6))
+    styles.add(ParagraphStyle(
+        name='CodeBlock',
+        fontName='Courier',
+        fontSize=9,
+        leading=12,
+        leftIndent=10,
+        rightIndent=10,
+        spaceBefore=8,
+        spaceAfter=8,
+        backColor=HexColor('#2c3e50'),
+        textColor=HexColor('#ecf0f1'),
+    ))
 
     lines = markdown_text.split("\n")
     story = []
 
     bullet_buffer = []  # For collecting bullet points
+    in_code_block = False
+    code_buffer = []  # For collecting code block lines
 
     for line in lines:
         stripped = line.strip()
 
-        # H1
-        if stripped.startswith("# "):
-            if bullet_buffer:
-                story.append(make_bullet_list(bullet_buffer, styles))
-                bullet_buffer = []
-            story.append(Paragraph(stripped[2:], styles['H1']))
-            story.append(Spacer(1, 0.1 * inch))
+        # ── Fenced code block handling ──────────────────────
+        if stripped.startswith("```"):
+            if not in_code_block:
+                # Opening fence — flush any pending bullets, enter code mode
+                if bullet_buffer:
+                    story.append(make_bullet_list(bullet_buffer, styles))
+                    bullet_buffer = []
+                in_code_block = True
+                code_buffer = []
+                continue  # skip the opening ``` line
+            else:
+                # Closing fence — emit the collected code block
+                code_text = "\n".join(code_buffer)
+                story.append(BackgroundPreformatted(code_text, styles['CodeBlock']))
+                in_code_block = False
+                code_buffer = []
+                continue  # skip the closing ``` line
 
-        # H2
-        elif stripped.startswith("## "):
+        if in_code_block:
+            # Preserve the original line (including leading whitespace)
+            code_buffer.append(line.rstrip())
+            continue
+
+        # ── Normal markdown handling ─────────────────────────
+        # Heading order: check #### before ### before ## before #
+
+        # H4 (rendered as H3 — no separate visual level needed)
+        if stripped.startswith("#### "):
             if bullet_buffer:
                 story.append(make_bullet_list(bullet_buffer, styles))
                 bullet_buffer = []
-            story.append(Paragraph(stripped[3:], styles['H2']))
-            story.append(Spacer(1, 0.1 * inch))
+            story.append(Paragraph(md_to_rl(stripped[5:]), styles['H3']))
 
         # H3
         elif stripped.startswith("### "):
             if bullet_buffer:
                 story.append(make_bullet_list(bullet_buffer, styles))
                 bullet_buffer = []
-            story.append(Paragraph(stripped[4:], styles['H3']))
-            story.append(Spacer(1, 0.05 * inch))
+            story.append(Paragraph(md_to_rl(stripped[4:]), styles['H3']))
 
-        # Bullet point
-        elif stripped.startswith("- "):
+        # H2
+        elif stripped.startswith("## "):
+            if bullet_buffer:
+                story.append(make_bullet_list(bullet_buffer, styles))
+                bullet_buffer = []
+            story.append(Paragraph(md_to_rl(stripped[3:]), styles['H2']))
+
+        # H1
+        elif stripped.startswith("# "):
+            if bullet_buffer:
+                story.append(make_bullet_list(bullet_buffer, styles))
+                bullet_buffer = []
+            story.append(Paragraph(md_to_rl(stripped[2:]), styles['H1']))
+
+        # Bullet point (- item or * item)
+        elif stripped.startswith("- ") or stripped.startswith("* "):
             bullet_buffer.append(stripped[2:])
 
         # Numbered list
@@ -463,21 +229,71 @@ def parse_markdown_to_story(markdown_text: str):
             if bullet_buffer:
                 story.append(make_bullet_list(bullet_buffer, styles))
                 bullet_buffer = []
-            story.append(Paragraph(stripped, styles['NormalText']))
+            story.append(Paragraph(md_to_rl(stripped), styles['NormalText']))
 
-    # Flush remaining bullets
+    # Flush remaining buffers
+    if in_code_block and code_buffer:
+        # Unclosed code block — emit what we have
+        code_text = "\n".join(code_buffer)
+        story.append(BackgroundPreformatted(code_text, styles['CodeBlock']))
     if bullet_buffer:
         story.append(make_bullet_list(bullet_buffer, styles))
+
+    # Post-process: wrap each heading + its first following flowable
+    # in KeepTogether to reliably prevent orphan headings.
+    story = _keep_headings_with_content(story)
 
     return story
 
 
 def make_bullet_list(bullets, styles):
     return ListFlowable(
-        [ListItem(Paragraph(b, styles['CustomBullet'])) for b in bullets],
+        [ListItem(Paragraph(md_to_rl(b), styles['CustomBullet'])) for b in bullets],
         bulletType='bullet'
-)
+    )
 
+
+_HEADING_STYLES = frozenset(('H1', 'H2', 'H3'))
+
+
+def _keep_headings_with_content(story):
+    """Wrap each heading + its first following content flowable in KeepTogether.
+
+    This prevents orphan headings at page bottoms more reliably than
+    keepWithNext alone.  Spacers between heading and content are included
+    in the group so they don't break the bond.
+    """
+    result = []
+    i = 0
+    while i < len(story):
+        flowable = story[i]
+
+        # Check if this is a heading Paragraph
+        is_heading = (
+            isinstance(flowable, Paragraph)
+            and hasattr(flowable, 'style')
+            and flowable.style.name in _HEADING_STYLES
+        )
+
+        if is_heading and i + 1 < len(story):
+            # Collect heading + any spacers + first content flowable
+            group = [flowable]
+            j = i + 1
+            # Skip spacers (include them in the group)
+            while j < len(story) and isinstance(story[j], Spacer):
+                group.append(story[j])
+                j += 1
+            # Include the first content flowable after the spacers
+            if j < len(story):
+                group.append(story[j])
+                j += 1
+            result.append(KeepTogether(group))
+            i = j
+        else:
+            result.append(flowable)
+            i += 1
+
+    return result
 
 
 # ------------------------
@@ -551,4 +367,3 @@ def generate_course_pdf(course: Dict[str, Any], output_path: str) -> bool:
     except Exception as e:
         print("PDF Generation Error:", e)
         return False
-    
